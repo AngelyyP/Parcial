@@ -1,0 +1,9 @@
+1. Nesting tasks within projects is practical because it allows for more organized data and easier understanding thanks to its structure. Additionally, this allows all task data for a project to be displayed in a single query.
+
+4.1. It failed because the query had three requests, so a composite index was needed.
+
+4.2. To define the composite index, the three fields being filtered (priority, status, createdAt) are needed. When the error appears in the console, it includes a link; this link allows you to create the composite index.
+
+4.3. The same index can only be used if you are going to run queries that involve all three fields (priority, status, createdAt).
+
+6. One solution is to create a collection of user dashboards, in which the aggregated data for each user's tasks is stored.
