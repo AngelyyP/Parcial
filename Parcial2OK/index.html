@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Web</title>
+</head>
+
+<body>
+
+    <div>
+        <h1>Connected to Firestore</h1>
+        <button id="loadDataBtn">Show all documents in console</button>
+    </div>
+
+    <!--Second point-->
+    <div>
+        <h1>Add tasks</h1>
+
+        <label for="taskId">Id Tasks:</label>
+        <input type="text" id="taskId" placeholder="Ej: 30003625"><br><br>
+
+        <label for="projectId">Id Projects:</label>
+        <input type="text" id="projectId" placeholder="Ej: Sergio"><br><br>
+
+        <label for="teamId">Id Teams:</label>
+        <input type="text" id="teamId" placeholder="Ej: Reyes"><br><br>
+
+        <label for="assignedTo">User:</label>
+        <input type="text" id="assignedTo" placeholder="Ej: Profe"><br><br>
+
+        <label for="priority">Priority:</label>
+        <input type="text" id="priority" placeholder="Ej: 18"><br><br>
+
+        <label for="status">Status:</label>
+        <input type="text" id="status" placeholder="Ej: 18"><br><br>
+
+        <label for="createdAt">Created at:</label>
+        <input type="date" id="createdAt" placeholder="Ej: 26/08/2025"><br><br>
+
+        <button id="seedTaskBtn">Add task</button>
+    </div>
+
+   <!--Third point-->
+    <div>
+        <h1>Get User Critical Tasks</h1>
+    
+        <label for="criticalTeamId">Team ID:</label>
+        <input type="text" id="criticalTeamId" placeholder="Ej: Reyes"><br><br>
+    
+        <label for="criticalUserId">User ID:</label>
+        <input type="text" id="criticalUserId" placeholder="Ej: Profe"><br><br>
+    
+        <button id="getCriticalTasksBtn">Get Critical Tasks</button>
+    </div>
+
+    <!--Five point-->
+    <div>
+        <h1>Get Pending Tasks</h1>
+
+        <label for="criticalTeamIdInput">Team ID (Critical):</label>
+        <input type="text" id="criticalTeamIdInput" placeholder="Ej: Reyes"><br><br>
+        
+    
+        <label for="criticalUserIdInput">User ID (Critical):</label>
+        <input type="text" id="criticalUserIdInput" placeholder="Ej: Reyes"><br><br>
+        
+    
+        <button id="countHighPriorityBtn">Count High Priority Pending Tasks</button>
+    </div>
+    
+    
+
+    <script type="module">
+        import { FirestoreService } from './modules/firestore_service.js';
+
+        let firestore = null;
+        document.getElementById("loadDataBtn").addEventListener("click", async () => {
+            const docs = await firestore.getAllDocuments();
+            console.log("Obtained Docs:", docs);
+        });
+
+        import { db } from './modules/firebase_init.js';
+        import { collection, query, where, orderBy, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+
+        // Third point
+        async function getUserCriticalTasks(teamId, userId) {
+            const q = query(
+                collection(db, `/Teams/${teamId}/Projects/projectId/Tasks`), 
+                where("assignedTo", "==", userId),
+                where("priority", "==", "high"),
+                where("status", "==", "pending"),
+                orderBy("createdAt")
+            );
+
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+          // Five point
+          async function countHighPriorityPendingTasks(teamId, userId) {
+            const q = query(
+                collection(db, `/Teams/${teamId}/Projects/projectId/Tasks`), 
+                where("assignedTo", "==", userId),
+                where("priority", "==", "high"),
+                where("status", "==", "pending"),
+                orderBy("createdAt")
+            );
+        
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        //Second point
+        document.getElementById("seedTaskBtn").addEventListener("click", async () => {
+
+            const teamId = document.getElementById("teamId").value.trim();
+            const projectId = document.getElementById("projectId").value.trim();
+            const taskId = document.getElementById("taskId").value.trim();
+
+            const assignedTo = document.getElementById("assignedTo").value.trim();
+            const priority = document.getElementById("priority").value.trim();
+            const status = document.getElementById("status").value.trim();
+            const createdAt = document.getElementById("createdAt").value;
+    
+            if (!teamId || !projectId || !taskId || !assignedTo || !priority || !status || !createdAt) {
+                alert("Please fill in all fields.");
+                return;
+            }
+    
+            firestore = new FirestoreService("/Teams/teamId/Projects/projectId/Tasks/");
+
+            const data = {
+                teamId,
+                projectId,
+                assignedTo,
+                priority,
+                status,
+                createdAt:  new Date(createdAt)
+            };
+
+            await firestore.PostDocument(taskId, data);
+        });
+
+        //Third point
+        document.getElementById("getCriticalTasksBtn").addEventListener("click", async () => {
+            const teamId = document.getElementById("criticalTeamId").value.trim();
+            const userId = document.getElementById("criticalUserId").value.trim();
+
+            if (!teamId || !userId) {
+                alert("Please enter both Team ID and User ID.");
+                return;
+            }
+        
+            try {
+                const tasks = await getUserCriticalTasks(teamId, userId);
+                console.log("Critical Tasks:", tasks);
+            } catch (err) {
+                console.error("Error fetching critical tasks:", err);
+            }
+        });
+
+        //Five point
+        document.getElementById("countHighPriorityBtn").addEventListener("click", async () => {
+            const teamId = document.getElementById("criticalTeamIdInput").value.trim();
+            const userId = document.getElementById("criticalUserIdInput").value.trim();
+        
+            if (!teamId || !userId) {
+                alert("Please enter both Team ID and User ID.");
+                return;
+            }
+        
+            try {
+                const tasks = await countHighPriorityPendingTasks(teamId, userId);
+                console.log("Pending Tasks for User:", tasks);
+            } catch (err) {
+                console.error("Error fetching tasks:", err);
+            }
+        });
+        
+      
+        
+        
+        
+    </script>
+</body>
+
+</html>
